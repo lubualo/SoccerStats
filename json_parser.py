@@ -20,11 +20,13 @@ class JsonParser:
     def parse_teams_and_stats(self, json_data: dict) -> dict:
         tables_groups = json_data.get("tables_groups", [])
         teams = {}
-        team_stats_list = []
+        team_stats_by_table = {}  # Dictionary to store team stats, grouped by table name
 
         for group in tables_groups:
             tables = group.get("tables", [])
             for table in tables:
+                table_name = table.get("name", "Unknown Table").replace(' ', '-')
+                team_stats_list = []
                 rows = table.get("table", {}).get("rows", [])
                 for row in rows:
                     # Parse team data
@@ -62,8 +64,12 @@ class JsonParser:
 
                     # Add the stats to the list
                     team_stats_list.append(team_stats)
+                
+                # Add the stats list to the dictionary with the table name as the key
+                team_stats_by_table[table_name] = team_stats_list
 
-        return {"teams": teams, "team_stats": team_stats_list}
+
+        return {"teams": teams, "team_stats_by_table": team_stats_by_table}
     
     def parse_games(self, json_data: dict) -> list:
         games_data = json_data.get("games", [])

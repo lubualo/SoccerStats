@@ -28,13 +28,14 @@ def main():
         teams_and_stats = parser_service.parse_teams_and_stats(json_response)
 
         teams_data = teams_and_stats['teams']
-        team_stats_data = teams_and_stats['team_stats']
+        team_stats_by_table_data = teams_and_stats['team_stats_by_table']
 
         # Export to CSV
         export_service.export_teams(teams_data, league_data.url_name + '_teams.csv')
         print("Teams data exported to teams.csv")
 
-        export_service.export_team_stats(team_stats_data, league_data.url_name + '_teams_stats.csv')
+        for table_name, stats_list in team_stats_by_table_data.items():        
+            export_service.export_team_stats(stats_list, league_data.url_name + '_' + table_name + '_teams_stats.csv')
         print("Team stats data exported to teams_stats.csv")
     except Exception as e:
         print(f"Error fetching or parsing league data: {e}")
