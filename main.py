@@ -2,84 +2,56 @@ import os
 from dotenv import load_dotenv
 from api_client import APIClient
 from json_parser import JsonParser
+from export_service import ExportService
 
 def main():
     # Load environment variables from the .env file
     load_dotenv()
 
-    # Retrieve the API URL from the environment variables
-    tables_and_fixtures_api_url = os.getenv("API_TABLES_AND_FIXTURES_URL")
-    if not tables_and_fixtures_api_url:
-        print("Error: API_TABLES_AND_FIXTURES_URL is not defined in the .env file.")
-        return
-
+    # Retrieve environment variables
     base_api_url = os.getenv("API_GAMES_URL")
-    if not base_api_url:
-        print("Error: API_GAMES_URL is not defined in the .env file.")
+    tables_and_fixtures_api_url = os.getenv("API_TABLES_AND_FIXTURES_URL")
+
+    if not tables_and_fixtures_api_url or not base_api_url:
+        print("Error: API URLs are not defined in the .env file.")
         return
 
-    # Initialize the API client with the API URL
+    # Initialize services
     api_client = APIClient()
+    parser_service = JsonParser()
+    export_service = ExportService()
 
-    # Fetch data from the API
+    # Fetch and parse league data
     try:
         json_response = api_client.get(tables_and_fixtures_api_url)
+        league_data = parser_service.parse_league(json_response)
+        teams_and_stats = parser_service.parse_teams_and_stats(json_response)
+
+        teams_data = teams_and_stats['teams']
+        team_stats_data = teams_and_stats['team_stats']
+
+        # Export to CSV
+        export_service.export_teams(teams_data, league_data.url_name + '_teams.csv')
+        print("Teams data exported to teams.csv")
+
+        export_service.export_team_stats(team_stats_data, league_data.url_name + '_teams_stats.csv')
+        print("Team stats data exported to teams_stats.csv")
     except Exception as e:
-        print(f"Error fetching data from the API: {e}")
-        return
+        print(f"Error fetching or parsing league data: {e}")
 
-    # Initialize the JsonParser service
-    parser_service = JsonParser()
-
-    # Parse the league data from the JSON response
-    league_data = parser_service.parse_league(json_response)
-    teams_and_stats = parser_service.parse_teams_and_stats(json_response)
-    teams_data = teams_and_stats['teams']
-    team_stats_data = teams_and_stats['team_stats']
-    if league_data:
-        print("League Data:")
-        print(league_data)
-        # print("teams_data Data:")
-        # print(teams_data)
-        # print("team_stats_data Data:")
-        # print(team_stats_data)
-    else:
-        print("Error: League data not found in the response.")
-
-    # Parse games data
+    # Fetch and parse games data
     try:
         games = []
-
-        for schedule_date in range(1, 2):  # Looping through calendar dates
+        for schedule_date in range(1, 17):  # Looping through league calendar dates
             endpoint = f"{base_api_url}72_224_3_{schedule_date}?support_b=false"
             response = api_client.get(endpoint)
-            games.extend(parser_service.parse_games(response))  # Parse games for each date
-
-        print("Parsed Games:")
-        for game in games:
-            print(game)
-
+            games.extend(parser_service.parse_games(response))
+            
+        # Export to CSV
+        export_service.export_games(games, league_data.url_name + '_games.csv')
+        print("Games data exported to games.csv")
     except Exception as e:
-        print(f"Error fetching or parsing games: {e}")
-
-
-if __name__ == "__main__":
-    main()
-
-
-import os
-from dotenv import load_dotenv
-from api_client import APIClient
-from json_parser import JsonParser
-
-def main():
-    # Load environment variables from the .env file
-    load_dotenv()
-
-    # Initialize the API client with the API URL
-    api_client = APIClient()
-    parser_service = JsonParser()
-
+        print(f"Error fetching or parsing games data: {e}")
 
 if __name__ == "__main__":
     main()
