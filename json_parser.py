@@ -81,8 +81,13 @@ class JsonParser:
                 local_team = teams[0].get("url_name") if len(teams) > 0 else None
                 visitor_team = teams[1].get("url_name") if len(teams) > 1 else None
 
-                local_score = int(game.get("scores", [0])[0])
-                visitor_score = int(game.get("scores", [0])[1])
+                # Handle scores based on the game's status
+                if status == "Prog.":  # Game not played
+                    local_score = 0
+                    visitor_score = 0
+                else:  # Game has been played
+                    local_score = int(game.get("scores", [0])[0])
+                    visitor_score = int(game.get("scores", [0])[1])
                 
                 local_red_cards = int(teams[0].get("red_cards", 0)) if len(teams) > 0 else 0
                 visitor_red_cards = int(teams[1].get("red_cards", 0)) if len(teams) > 1 else 0
