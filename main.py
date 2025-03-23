@@ -1,12 +1,18 @@
 import os
+import sys
 from dotenv import load_dotenv
 from api_client import APIClient
 from json_parser import JsonParser
 from export_service import ExportService
 
 def main():
-    # Load environment variables from the .env file
-    load_dotenv()
+    if getattr(sys, 'frozen', False):  # If executed as a .exe
+        base_path = sys._MEIPASS  # .exe file's temporary folder
+    else:  # If executed as normal script
+        base_path = os.path.dirname(__file__)
+
+    env_path = os.path.join(base_path, '.env')  # Ruta al archivo .env
+    load_dotenv(env_path)
 
     # Retrieve environment variables
     base_api_url = os.getenv("API_GAMES_URL")
